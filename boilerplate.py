@@ -5,7 +5,7 @@ import numpy as np
 import pygame as pg
 import asyncio as aio
 
-def load_image(name, *, alpha=None, colorkey=None):
+def load_image(name: str, *, alpha=None, colorkey=None) -> pg.Surface:
     """Load an image file into memory."""
     try:
         image = pg.image.load(os.path.join('assets', 'textures', name))
@@ -39,12 +39,12 @@ class TileMapSprite(pg.sprite.Sprite):
                 )
             self.tilemap = pg.Surface((self.size[0] * 32, self.size[1] * 32))
             for row, col in itertools.product(*map(range, self.size)):
-                tileid = struct.unpack('>I', mapfile.read(4))[0]
-                self.tilemap.blit(
-                    self.tiles,
-                    (col * 32, row * 32, 32, 32),
-                    (tileid % 8 * 32, tileid // 8 * 32, 32, 32)
-                    )
+                for tileid in struct.unpack('>HH', mapfile.read(4)):
+                    self.tilemap.blit(
+                        self.tiles,
+                        (col * 32, row * 32, 32, 32),
+                        (tileid % 8 * 32, tileid // 8 * 32, 32, 32)
+                        )
         self.tilerect = self.tilemap.get_rect()
         self.rect = self.tilemap.get_rect()
         self.image = self.tilemap.copy()

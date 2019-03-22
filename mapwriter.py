@@ -4,7 +4,7 @@ import struct
 import numpy as np
 
 def write_map(fname: str, collarr: np.array, tilearr: np.array) -> None:
-    if collarr.shape != tilearr.shape or len(collarr.shape) != 2:
+    if collarr.shape != tilearr.shape[1:] or len(collarr.shape) != 2:
         raise TypeError('array shapes do not match 2d mapping')
     print(f'Writing mapfile {fname}')
     with open(os.path.join('assets', 'mapdata', fname), 'wb') as mapfile:
@@ -14,8 +14,8 @@ def write_map(fname: str, collarr: np.array, tilearr: np.array) -> None:
         for cell in collarr.flatten():
             mapfile.write(struct.pack('>?', cell))
         print('Writing tilemap table data...')
-        for cell in tilearr.flatten():
-            mapfile.write(struct.pack('>I', cell))
+        for layer1, layer2 in zip(tilearr[0].flatten(), tilearr[1].flatten()):
+            mapfile.write(struct.pack('>HH', layer1, layer2))
     print('Done!')
 
 if __name__ == '__main__':
@@ -26,11 +26,17 @@ if __name__ == '__main__':
             *([1, *([0] * 14), 1] for _ in range(14)),
             [1] * 16
             ]),
-        np.array([
+        np.array([[
             [2, *([3] * 14), 4],
             [1, *([8] * 14), 5],
             *([1, *([8] * 14), 5] for _ in range(12)),
             [1, *([8] * 14), 5],
             [6, *([0] * 14), 7]
-            ]),
+            ], [
+            *([0] * 16 for _ in range(7)),
+            [*([0] * 7), 36, 38, *([0] * 7)],
+            [*([0] * 7), 36, 38, *([0] * 7)],
+            *([0] * 16 for _ in range(7))
+            ]]),
+            
         )

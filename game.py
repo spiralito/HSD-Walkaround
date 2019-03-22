@@ -31,26 +31,30 @@ class PlayerSprite(ClipDrawSprite):
             pg.Rect((0, 0), self.size),
             pg.Rect((0, 0), self.size),
             )
-        self.collrect = pg.Rect(0, 0, 24, 8)
+        self.collrect = pg.Rect(0, 0, 22, 8)
         self.rect.midbottom = self.collrect.midbottom = pos
+        # Movement attributes.
+        self.mdir = [False] * 4
         self.vel = [0, 0]
+        # Animation attributes.
         self.facing = 0
         self.frame = 0
 
     def set_motion(self, axis, mdir, press):
-        if axis == 0:
-            if self.vel[1] * mdir > 0:
-                self.vel[1] = 0
-            elif press:
-                self.vel[1] = 2 * mdir
-        else:
-            if self.vel[0] * mdir > 0:
-                self.vel[0] = 0
-            elif press:
-                self.vel[0] = 2 * mdir
+        vdir = ((mdir < 0) << 1) + axis
+        self.mdir[vdir] = press
         if press:
-            self.facing = ((mdir < 0) << 1) + axis
-            self.vel[axis] = 0 # prevent diagonal movement
+            self.facing = vdir
+            self.vel[not axis] = 2 * mdir
+            self.vel[axis] = 0
+        else:
+            if any(self.mdir):
+                vdir = self.mdir.index(True)
+                self.facing = vdir
+                self.vel[not (vdir & 1)] = 2 * (1, -1)[vdir >> 1]
+                self.vel[vdir & 1] = 0
+            else:
+                self.vel = [0, 0]
 
     def update(self, tilemap):
         # Store old position: if collision occurs, reset position.
@@ -60,12 +64,12 @@ class PlayerSprite(ClipDrawSprite):
         self.collrect.midbottom = self.rect.midbottom
         if self.collrect.collidelist(tilemap.collmap) >= 0:
             self.rect.midbottom = self.collrect.midbottom = oldpos
-        # Update facing angle.
-        self.clip.x = self.size[0] * (self.facing * 3 + (0, 1, 0, 2)[self.frame // 10])
+        # Update animation state.
+        self.clip.x = self.size[0] * (self.facing * 3 + (1, 0, 2, 0)[self.frame // 10])
         if self.vel[0] or self.vel[1]:
             self.frame = (self.frame + 1) % 40
         else:
-            self.frame = 0
+            self.frame = 39
 
 
 class Walkaround(GameState):
