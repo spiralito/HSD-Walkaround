@@ -5,7 +5,7 @@ from cx_Freeze import setup, Executable
 # Dependency list.
 build_exe_options = {
     'packages': ['asyncio', 'numpy', 'pygame'], 
-    'excludes': ['tkinter'],
+    'excludes': ['tkinter', 'matplotlib', 'scipy'],
     'include_files': ['assets']
 }
 # Base for GUI apps on Windows.
@@ -20,5 +20,10 @@ setup(
     author_email = '',
     license = 'MIT',
     options = {'build_exe': build_exe_options},
-    executables = [Executable('game.py', base=base)],
+    executables = [Executable(
+        script='game.py',
+        base=base,
+        icon='icon.ico',
+        targetName='Walkaround.exe'
+        )],
     )

@@ -25,29 +25,47 @@ class PlayerSprite(ClipDrawSprite):
         return cls.instance
 
     def __init__(self, pos):
+        self.size = (20, 36)
         super().__init__(
             load_image('sprites.png', colorkey=0xFF00FF),
-            pg.Rect(0, 0, 32, 32),
-            pg.Rect(0, 0, 32, 32),
+            pg.Rect((0, 0), self.size),
+            pg.Rect((0, 0), self.size),
             )
-        self.rect.midbottom = pos
+        self.collrect = pg.Rect(0, 0, 24, 8)
+        self.rect.midbottom = self.collrect.midbottom = pos
         self.vel = [0, 0]
+        self.facing = 0
+        self.frame = 0
 
     def set_motion(self, axis, mdir, press):
         if axis == 0:
             if self.vel[1] * mdir > 0:
                 self.vel[1] = 0
             elif press:
-                self.vel[1] = 3 * mdir
+                self.vel[1] = 2 * mdir
         else:
             if self.vel[0] * mdir > 0:
                 self.vel[0] = 0
             elif press:
-                self.vel[0] = 3 * mdir
+                self.vel[0] = 2 * mdir
+        if press:
+            self.facing = ((mdir < 0) << 1) + axis
+            self.vel[axis] = 0 # prevent diagonal movement
 
-    def update(self):
+    def update(self, tilemap):
+        # Store old position: if collision occurs, reset position.
+        oldpos = self.rect.midbottom
         self.rect.centerx += self.vel[0]
         self.rect.bottom += self.vel[1]
+        self.collrect.midbottom = self.rect.midbottom
+        if self.collrect.collidelist(tilemap.collmap) >= 0:
+            self.rect.midbottom = self.collrect.midbottom = oldpos
+        # Update facing angle.
+        self.clip.x = self.size[0] * (self.facing * 3 + (0, 1, 0, 2)[self.frame // 10])
+        if self.vel[0] or self.vel[1]:
+            self.frame = (self.frame + 1) % 40
+        else:
+            self.frame = 0
 
 
 class Walkaround(GameState):
@@ -79,7 +97,7 @@ class Walkaround(GameState):
                     self.player.set_motion(1, -1, False)
                 elif event.key == key_config['R']:
                     self.player.set_motion(1, +1, False)
-        self.player.update()
+        self.player.update(self.tilemap)
 
     async def draw_frame(self):
         window = self.handler.window

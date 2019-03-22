@@ -31,11 +31,12 @@ class TileMapSprite(pg.sprite.Sprite):
             if mapfile.read(4) != b'TLMP':
                 raise IOError('Mapfile of incorrect format')
             self.size = struct.unpack('>II', mapfile.read(8))
-            self.collmap = np.array([
-                [byte for byte in mapfile.read(self.size[1])]
-                for _ in range(self.size[0])
-                ]
-                , dtype=bool)
+            self.collmap = tuple(
+                pg.Rect(col * 32, row * 32, 32, 32)
+                for row in range(self.size[0])
+                for col, byte in enumerate(mapfile.read(self.size[1]))
+                if byte
+                )
             self.tilemap = pg.Surface((self.size[0] * 32, self.size[1] * 32))
             for row, col in itertools.product(*map(range, self.size)):
                 tileid = struct.unpack('>I', mapfile.read(4))[0]
