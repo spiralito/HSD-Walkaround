@@ -32,7 +32,7 @@ class ChestSprite(InteractibleSprite):
         self.size = (68, 44)
         self.opened = False
 
-    def trigger(self):
+    def trigger(self, player):
         if not self.opened:
             print('You got nothing!')
             self.opened = True
@@ -51,7 +51,7 @@ class PlayerSprite(ClipDrawSprite):
             cls.instance = object.__new__(cls)
         return cls.instance
 
-    def __init__(self, pos, *args):
+    def __init__(self, pos, facing, *args):
         self.size = (40, 72)
         super().__init__(
             load_image('sprites.png', colorkey=0xFF00FF),
@@ -59,14 +59,16 @@ class PlayerSprite(ClipDrawSprite):
             pg.Rect((0, 0), self.size),
             )
         self.hitbox = pg.Rect(0, 0, 36, 12)
-        self.ibox = pg.Rect(0, 0, 4, 72)
+        self.ibox = pg.Rect(0, 0, 4, 4)
         self.rect.midbottom = self.hitbox.midbottom = pos
         # Movement attributes.
         self.dirs = []
         self.vel = [0, 0]
         # Animation attributes.
-        self.facing = 0
+        self.facing = facing - 1
         self.frame = 0
+        self.delay = 12
+        self.cycle = self.delay * 4
 
     def set_motion(self, vdir, press):
         if not press:
@@ -78,13 +80,13 @@ class PlayerSprite(ClipDrawSprite):
         else:
             self.dirs.append(vdir)
         self.facing = vdir
-        self.vel[~vdir & 1] = 3 * (1, -1)[vdir >> 1]
+        self.vel[~vdir & 1] = 2 * (1, -1)[vdir >> 1]
         self.vel[vdir & 1] = 0
 
     def interact(self, obj_list):
         index = self.ibox.collidelist([obj.ibox for obj in obj_list[1:]])
         if index >= 0:
-            obj_list[index + 1].trigger()
+            obj_list[index + 1].trigger(self)
 
     def update(self, tilemap):
         # Store old position: if collision occurs, reset position.
@@ -95,15 +97,15 @@ class PlayerSprite(ClipDrawSprite):
         else:
             self.rect.midbottom = self.hitbox.midbottom
         # Update interaction hitbox.
-        self.ibox.size = ((4, 72), (72, 4))[self.facing & 1]
+        self.ibox.size = ((4, 56), (56, 4))[self.facing & 1]
         setattr(
             self.ibox,
             ('midtop', 'midleft', 'midbottom', 'midright')[self.facing],
             self.rect.midbottom
             )
         # Update animation state.
-        self.clip.x = self.size[0] * (self.facing * 3 + (1, 0, 2, 0)[self.frame // 10])
-        self.frame = (self.frame + 1) % 40 if any(self.vel) else 39
+        self.clip.x = self.size[0] * (self.facing * 3 + (1, 0, 2, 0)[self.frame // self.delay])
+        self.frame = (self.frame + 1) % self.cycle if any(self.vel) else self.cycle - 1
 
 
 TileMapSprite.sprites = (PlayerSprite, ChestSprite)
@@ -115,6 +117,7 @@ class Walkaround(GameState):
         self.tilemap = TileMapSprite('testmap.dat')
         self.tilemap.rect.center = self.handler.rect.center
         self.player = self.tilemap.objs[0]
+        self.count = 0
 
     async def eval_logic(self):
         for event in pg.event.get():
@@ -141,9 +144,11 @@ class Walkaround(GameState):
                 elif event.key == key_config['R']:
                     self.player.set_motion(1, False)
         self.player.update(self.tilemap)
+        self.count = (self.count + 1) % 60
 
     async def draw_frame(self):
         self.window.fill(0x000000)
+        self.window.set_at((self.count, 0), 0xFFFFFF)
         self.tilemap.draw(self.window)
         pg.display.flip()
 
