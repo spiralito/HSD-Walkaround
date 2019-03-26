@@ -104,16 +104,25 @@ class TileMapSprite(pg.sprite.Sprite):
         self.tilerect = self.tilemap.get_rect()
         self.rect = self.tilemap.get_rect()
         self.image = self.tilemap.copy()
+        self.player, *self.objs = self.objs
 
     def update(self):
-        obj_iter = iter(self.objs)
-        next(obj_iter).update(self)
-        for obj in obj_iter:
+        self.player.update(self)
+        for obj in self.objs:
             obj.update()
 
     def draw(self, window):
+        back = []; frnt = []
+        for obj in self.objs:
+            if obj.rect.bottom <= self.player.rect.bottom:
+                back.append(obj)
+            else:
+                frnt.append(obj)
         self.image.blit(self.tilemap, (0, 0))
-        for obj in reversed(self.objs):
+        for obj in back:
+            obj.draw(self.image)
+        self.player.draw(self.image)
+        for obj in frnt:
             obj.draw(self.image)
         window.blit(self.image, self.rect)
 
