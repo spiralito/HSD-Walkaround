@@ -80,7 +80,7 @@ class TileMapSprite(pg.sprite.Sprite):
                 for col, byte in enumerate(mapfile.read(self.size[1]))
                 if byte & 1
                 ]
-            self.tilemap = pg.Surface((self.size[0] * 32, self.size[1] * 32))
+            self.tilemap = pg.Surface((self.size[1] * 32, self.size[0] * 32))
             for row, col in itertools.product(*map(range, self.size)):
                 for tileid in struct.unpack('>HH', mapfile.read(4)):
                     self.tilemap.blit(
@@ -105,19 +105,39 @@ class TileMapSprite(pg.sprite.Sprite):
         self.rect = self.tilemap.get_rect()
         self.image = self.tilemap.copy()
         self.player, *self.objs = self.objs
+        self.bounds = pg.display.get_surface().get_rect()
+        if self.rect.w < self.bounds.w:
+            self.rect.centerx = self.bounds.centerx
+        else:
+            self.rect.x = self.bounds.centerx - self.player.rect.centerx
+        if self.rect.h < self.bounds.h:
+            self.rect.centery = self.bounds.centery
+        else:
+            self.rect.y = self.bounds.centery - self.player.rect.bottom
 
     def update(self):
         self.player.update(self)
         for obj in self.objs:
             obj.update()
+        # Auto-scrolling.
+        if self.player.rect.centerx + self.rect.x < self.bounds.left + 96:
+            self.rect.x = self.bounds.left + 97 - self.player.rect.centerx
+        elif self.player.rect.centerx + self.rect.x > self.bounds.right - 96:
+            self.rect.x = self.bounds.right - 97 - self.player.rect.centerx
+        if self.player.rect.bottom + self.rect.y < self.bounds.top + 96:
+            self.rect.y = self.bounds.top + 97 - self.player.rect.bottom
+        elif self.player.rect.bottom + self.rect.y > self.bounds.bottom - 96:
+            self.rect.y = self.bounds.bottom - 97 - self.player.rect.bottom
 
     def draw(self, window):
+        # Layer split.
         back = []; frnt = []
         for obj in self.objs:
             if obj.rect.bottom <= self.player.rect.bottom:
                 back.append(obj)
             else:
                 frnt.append(obj)
+        # Actual drawing of the layers.
         self.image.blit(self.tilemap, (0, 0))
         for obj in back:
             obj.draw(self.image)

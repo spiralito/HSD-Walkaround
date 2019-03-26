@@ -13,7 +13,7 @@ base = 'Win32GUI' if sys.platform == 'win32' else None
 
 setup(
     name = 'HSD Walkaround',
-    version = '1.1',
+    version = '1.2',
     description = 'Homestuck & Hiveswap Discord Walkaround Game',
     url = '',
     author = 'virtuNat',

@@ -66,10 +66,10 @@ class PlayerSprite(ClipDrawSprite):
         self.dirs = []
         self.vel = [0, 0]
         # Animation attributes.
-        self.facing = facing - 1
-        self.delay = 9
-        self.cycle = self.delay * 4
-        self.frame = self.cycle - 1
+        self.facing = facing - 1 # Facing index based on sprite sheet
+        self.delay = 9 # Maximum delay between animation frames
+        self.cycle = self.delay * 4 # Animation cycle frame length
+        self.frame = self.cycle - 1 # Current frame count
 
     def set_motion(self, vdir, press):
         if not press:
@@ -121,7 +121,6 @@ class Walkaround(GameState):
     def __init__(self, handler):
         super().__init__(handler)
         self.tilemap = TileMapSprite('testmap.dat')
-        self.tilemap.rect.center = self.handler.rect.center
         self.player = self.tilemap.player
         self.count = 0
 
@@ -149,7 +148,7 @@ class Walkaround(GameState):
                     self.player.set_motion(3, False)
                 elif event.key == key_config['R']:
                     self.player.set_motion(1, False)
-        self.player.update(self.tilemap)
+        self.tilemap.update()
         self.count = (self.count + 1) % 60
 
     async def draw_frame(self):

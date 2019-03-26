@@ -5,7 +5,7 @@ import numpy as np
 
 def write_map(fname, collarr, tilearr, objarr):
     if collarr.shape != tilearr.shape[1:] or len(collarr.shape) != 2:
-        raise TypeError('array shapes do not match 2d mapping')
+        raise TypeError(f'array shapes {collarr.shape} cannot be broadcast to {tilearr.shape}')
     print(f'Writing mapfile {fname}')
     with open(os.path.join('assets', 'mapdata', fname), 'wb') as mapfile:
         mapfile.write('TLMP'.encode())
@@ -27,26 +27,30 @@ if __name__ == '__main__':
     write_map(
         'testmap.dat',
         np.array([
-            [0] * 16,
-            [1] * 16,
-            *([1, *([0] * 14), 1] for _ in range(14)),
-            [1] * 16,
+            [0] * 36,
+            [1] * 36,
+            *([1, *([0] * 34), 1] for _ in range(14)),
+            [*([1] * 15), *([0] * 6), *([1] * 15)],
+            *([*([0] * 14), 1, *([0] * 6), 1, *([1] * 14)] for _ in range(7)),
+            [*([0] * 14), *([1] * 8), *([0] * 14)],
             ]),
         np.array([[
-            [0] * 16,
-            [2, *([3] * 14), 4],
-            [1, *([8] * 14), 5],
-            *([1, *([8] * 14), 5] for _ in range(12)),
-            [1, *([9] * 14), 5],
-            [6, *([0] * 14), 7]
+            [0] * 36,
+            [2, *([3] * 34), 4],
+            *([1, *([8] * 34), 5] for _ in range(14)),
+            *([*([0] * 14), 1, *([9] * 6), 5, *([0] * 14)] for _ in range(8)),
+            [*([0] * 14), 6, *([0] * 6), 7, *([0] * 14)],
             ], [
-            *([0] * 16 for _ in range(8)),
-            [*([0] * 7), 36, 38, *([0] * 7)],
-            [*([0] * 7), 36, 38, *([0] * 7)],
-            *([0] * 16 for _ in range(7))
+            *([0] * 36 for _ in range(8)),
+            [*([0] * 16), 36, 37, 37, 38, *([0] * 16)],
+            [*([0] * 16), 36, 37, 37, 38, *([0] * 16)],
+            *([0] * 36 for _ in range(15))
             ]]),
         np.array([
-            [0, 256, 256, 2],
-            [1, 280, 128],
+            [0, 576, 292, 1],
+            [1, 144, 310],
+            [1, 732, 310],
+            [1, 1116, 310],
+            [1, 600, 732],
             ]),
         )
