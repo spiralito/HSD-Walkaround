@@ -19,16 +19,15 @@ key_config = {
 class ChestSprite(InteractibleSprite):
     """Contains stuff."""
 
-    def __init__(self, pos, *args):
+    def __init__(self, x, y, *args):
         super().__init__(
             pg.Rect(0, 0, 68, 44),
             pg.Rect(0, 52, 68, 44),
-            pg.Rect(0, 0, 60, 44),
+            pg.Rect(0, 0, 52, 44),
             pg.Rect(0, 0, 52, 28)
             )
-        self.rect.bottomright = pos
-        self.ibox.bottomright = pos
-        self.hitbox.bottomright = (pos[0] - 4, pos[1])
+        self.rect.bottomright = self.ibox.bottomright = (x, y)
+        self.hitbox.bottomright = (x - 4, y)
         self.size = (68, 44)
         self.opened = False
 
@@ -51,7 +50,7 @@ class PlayerSprite(ClipDrawSprite):
             cls.instance = object.__new__(cls)
         return cls.instance
 
-    def __init__(self, pos, facing, *args):
+    def __init__(self, x, y, facing, *args):
         self.size = (40, 72)
         super().__init__(
             load_image('sprites.png', colorkey=0xFF00FF),
@@ -60,8 +59,8 @@ class PlayerSprite(ClipDrawSprite):
             )
         self.hitbox = pg.Rect(0, 0, 36, 16)
         self.ibox = pg.Rect(0, 0, 4, 4)
-        self.rect.midbottom = self.hitbox.midbottom = pos
-        self.pos = pos
+        self.rect.midbottom = self.hitbox.midbottom = (x, y)
+        self.pos = [x, y]
         # Movement attributes.
         self.dirs = []
         self.vel = [0, 0]
@@ -82,7 +81,7 @@ class PlayerSprite(ClipDrawSprite):
         else:
             self.dirs.append(vdir)
         self.facing = vdir
-        self.vel[~vdir & 1] = 2.25 * (1, -1)[vdir >> 1]
+        self.vel[~vdir & 1] = 2.5 * (1, -1)[vdir >> 1]
         self.vel[vdir & 1] = 0
 
     def interact(self, obj_list):
@@ -101,12 +100,13 @@ class PlayerSprite(ClipDrawSprite):
         else:
             self.rect.midbottom = self.hitbox.midbottom
         # Update interaction hitbox.
-        self.ibox.size = ((4, 56), (56, 4))[self.facing & 1]
+        self.ibox.size = ((16, 32), (32, 16))[self.facing & 1]
         setattr(
             self.ibox,
             ('midtop', 'midleft', 'midbottom', 'midright')[self.facing],
             self.rect.midbottom
             )
+        self.ibox.y -= 8
         # Update animation state.
         self.clip.x = self.size[0] * (
             self.facing * 3 + (1, 0, 2, 0)[self.frame // self.delay]
@@ -120,7 +120,7 @@ TileMapSprite.sprites = (PlayerSprite, ChestSprite)
 class Walkaround(GameState):
     def __init__(self, handler):
         super().__init__(handler)
-        self.tilemap = TileMapSprite('testmap.dat')
+        self.tilemap = TileMapSprite('floor2.dat')
         self.player = self.tilemap.player
         self.count = 0
 

@@ -73,7 +73,7 @@ class TileMapSprite(pg.sprite.Sprite):
         with open(os.path.join('assets', 'mapdata', mapname), 'rb') as mapfile:
             if mapfile.read(4) != b'TLMP':
                 raise IOError('Mapfile of incorrect format')
-            self.size = struct.unpack('>II', mapfile.read(8))
+            self.size = struct.unpack('>HH', mapfile.read(4))
             self.collmap = [
                 pg.Rect(col * 32, row * 32, 32, 32)
                 for row in range(self.size[0])
@@ -96,7 +96,7 @@ class TileMapSprite(pg.sprite.Sprite):
                 if len(self.objs[-1]) < 3 or buff != b'\x00\x00':
                     self.objs[-1].append(struct.unpack('>H', buff)[0])
                 else:
-                    self.objs[-1] = self.sprites[self.objs[-1][0]](self.objs[-1][1:3], *self.objs[-1][3:])
+                    self.objs[-1] = self.sprites[self.objs[-1][0]](*self.objs[-1][1:])
                     self.objs.append([])
                 buff = mapfile.read(2)
             self.objs.pop()
@@ -114,20 +114,26 @@ class TileMapSprite(pg.sprite.Sprite):
             self.rect.centery = self.bounds.centery
         else:
             self.rect.y = self.bounds.centery - self.player.rect.bottom
+        self.scrollpad = 164
+        self.bounds.w -= self.scrollpad * 2
+        self.bounds.h -= self.scrollpad * 2
+        self.bounds.topleft = (self.scrollpad, self.scrollpad)
 
     def update(self):
         self.player.update(self)
         for obj in self.objs:
             obj.update()
         # Auto-scrolling.
-        if self.player.rect.centerx + self.rect.x < self.bounds.left + 96:
-            self.rect.x = self.bounds.left + 97 - self.player.rect.centerx
-        elif self.player.rect.centerx + self.rect.x > self.bounds.right - 96:
-            self.rect.x = self.bounds.right - 97 - self.player.rect.centerx
-        if self.player.rect.bottom + self.rect.y < self.bounds.top + 96:
-            self.rect.y = self.bounds.top + 97 - self.player.rect.bottom
-        elif self.player.rect.bottom + self.rect.y > self.bounds.bottom - 96:
-            self.rect.y = self.bounds.bottom - 97 - self.player.rect.bottom
+        posx, posy = self.player.rect.midbottom
+        if not self.bounds.collidepoint(posx + self.rect.x, posy + self.rect.y):
+            if posx + self.rect.x < self.bounds.left:
+                self.rect.x = self.bounds.left + 1 - posx
+            else:
+                self.rect.x = self.bounds.right - 1 - posx
+            if posy + self.rect.y < self.bounds.top:
+                self.rect.y = self.bounds.top + 1 - posy
+            else:
+                self.rect.y = self.bounds.bottom - 1 - posy
 
     def draw(self, window):
         # Layer split.

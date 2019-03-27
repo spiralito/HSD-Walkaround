@@ -9,7 +9,7 @@ def write_map(fname, collarr, tilearr, objarr):
     print(f'Writing mapfile {fname}')
     with open(os.path.join('assets', 'mapdata', fname), 'wb') as mapfile:
         mapfile.write('TLMP'.encode())
-        mapfile.write(struct.pack('>II', *collarr.shape))
+        mapfile.write(struct.pack('>HH', *collarr.shape))
         print('Writing collision table data...')
         for cell in collarr.flatten():
             mapfile.write(struct.pack('>?', cell))
@@ -25,32 +25,26 @@ def write_map(fname, collarr, tilearr, objarr):
 
 if __name__ == '__main__':
     write_map(
-        'testmap.dat',
+        'floor2.dat',
         np.array([
-            [0] * 36,
-            [1] * 36,
-            *([1, *([0] * 34), 1] for _ in range(14)),
-            [*([1] * 15), *([0] * 6), *([1] * 15)],
-            *([*([0] * 14), 1, *([0] * 6), 1, *([1] * 14)] for _ in range(7)),
-            [*([0] * 14), *([1] * 8), *([0] * 14)],
+            [0] * 24,
+            [1] * 24,
+            *([1, *([0] * 22), 1] for _ in range(17)),
+            [1] * 24,
             ]),
         np.array([[
-            [0] * 36,
-            [2, *([3] * 34), 4],
-            *([1, *([8] * 34), 5] for _ in range(14)),
-            *([*([0] * 14), 1, *([9] * 6), 5, *([0] * 14)] for _ in range(8)),
-            [*([0] * 14), 6, *([0] * 6), 7, *([0] * 14)],
+            [52] * 24,
+            [52, *([12, 13] * 11), 52],
+            *([52, *([24] * 22), 52] for _ in range(3)),
+            *([52, 24, 24, 24, *([25] * 16), 24, 24, 24, 52] for _ in range(11)),
+            *([52, *([24] * 22), 52] for _ in range(3)),
+            [52] * 24,
             ], [
-            *([0] * 36 for _ in range(8)),
-            [*([0] * 16), 36, 37, 37, 38, *([0] * 16)],
-            [*([0] * 16), 36, 37, 37, 38, *([0] * 16)],
-            *([0] * 36 for _ in range(15))
+            [0] * 24 for _ in range(20)
             ]]),
         np.array([
-            [0, 576, 292, 1],
-            [1, 144, 310],
-            [1, 732, 310],
-            [1, 1116, 310],
-            [1, 600, 732],
+            [0, 384, 356, 1],
+            [1, 128, 356],
+            [1, 700, 356],
             ]),
         )
